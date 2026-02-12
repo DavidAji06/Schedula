@@ -17,7 +17,7 @@ function getWeekDates(startDate = new Date()) {
   return week;
 }
 
-export default function WeeklyCalendarGrid() {
+export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
   const weekDates = getWeekDates(new Date());
 
   return (
@@ -31,9 +31,15 @@ export default function WeeklyCalendarGrid() {
           </p>
         </div>
 
-        <button className="week__btn" type="button">
+        <div className="week__actions">
+          <button className="week__iconBtn" type="button" onClick={onToggleTheme}>
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+
+          <button className="week__btn" type="button">
           + Add event
-        </button>
+          </button>
+        </div>
       </header>
 
       <section className="week__card">
@@ -53,7 +59,7 @@ export default function WeeklyCalendarGrid() {
         <div className="grid grid--body">
           {DAYS.map((label) => (
             <div key={label} className="cell cell--col">
-              <div className="cell__empty">Drop events here</div>
+              <div className="cell__empty">Drop event</div>
             </div>
           ))}
         </div>

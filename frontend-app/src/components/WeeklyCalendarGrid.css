@@ -33,7 +33,7 @@
 
 .week__btn{
   border:1px solid var(--line);
-  background:rgba(255,255,255,0.06);
+  background:rgba(255, 255, 255, 0.06);
   color:var(--text);
   padding:10px 14px;
   border-radius:12px;
@@ -65,7 +65,7 @@
   background:rgba(0,0,0,0.12);
 }
 
-.cell--today{ background:rgba(124,58,237,0.18); }
+.cell--today{ background:rgba(0, 0, 0, 0.18); }
 .cell__dow{ font-size:13px; color:var(--muted); }
 .cell__date{ font-size:16px; font-weight:700; }
 
@@ -76,14 +76,54 @@
 }
 
 .cell__empty{
-  border:1px dashed rgba(255,255,255,0.14);
+  border:1px dashed rgb(255, 255, 255);
   border-radius:12px;
   padding:12px;
-  color:rgba(255,255,255,0.45);
+  color:rgba(255, 255, 255, 0.45);
   font-size:13px;
 }
 
 @media (max-width: 900px){
   .week__card{ overflow-x:auto; }
   .grid{ min-width:860px; }
+}
+
+/* Light mode settings*/
+:root[data-theme="light"]{
+   --bg:#8f8fe2; 
+
+  --card:rgba(0,0,0,0.04);
+  --card2:rgba(0,0,0,0.02);
+
+  --text:rgba(0,0,0,0.90);
+  --muted:rgba(0,0,0,0.60);
+
+  --line:rgba(0,0,0,0.10);
+
+  /* Optional: slightly softer today highlight in light mode */
+  /* (you can also leave this alone and just override the class below) */
+}
+
+:root[data-theme="light"] .week{
+  background:
+    radial-gradient(1200px 700px at 10% 0%, rgb(80, 224, 237), transparent 60%),
+    radial-gradient(1000px 600px at 100% 10%, rgb(80, 224, 237), transparent 55%),
+    var(--bg);
+}
+
+:root[data-theme="light"] .cell--head{
+  background: rgba(0, 0, 0, 0.03);
+}
+
+:root[data-theme="light"] .cell--today{
+  background: rgba(124,58,237,0.12);
+}
+
+:root[data-theme="light"] .cell--col{
+  background: rgba(0,0,0,0.01);
+}
+
+:root[data-theme="light"] .cell__empty{
+  border: 1px dashed rgb(0, 0, 0);
+  color: rgb(0, 0, 0);
 }
