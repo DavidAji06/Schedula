@@ -288,3 +288,66 @@
 @media (max-width: 520px){
   .form__row{ grid-template-columns: 1fr; }
 }
+
+.dangerBtn{
+  margin-right: auto;
+  border: 1px solid rgba(239,68,68,0.45);
+  background: rgba(239,68,68,0.12);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* Light mode delete */
+:root[data-theme="light"] .dangerBtn{
+  color: rgba(0,0,0,0.85);
+}
+
+/* Events more clickable */
+.event{
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+  user-select: none;
+}
+
+.event:hover{
+  transform: translateY(-2px);
+}
+
+/* Dark mode hover*/
+:root:not([data-theme="light"]) .event:hover{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.20);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.45);
+}
+
+/* Light mode hover */
+:root[data-theme="light"] .event{
+  background: rgba(0,0,0,0.02);
+}
+
+:root[data-theme="light"] .event:hover{
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.18);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+}
+
+/* Optional glow on however */
+:root:not([data-theme="light"]) .event--lecture:hover{ box-shadow: 0 10px 26px rgba(124,58,237,0.25); }
+:root:not([data-theme="light"]) .event--assignment:hover{ box-shadow: 0 10px 26px rgba(245,158,11,0.22); }
+:root:not([data-theme="light"]) .event--society:hover{ box-shadow: 0 10px 26px rgba(34,197,94,0.22); }
+:root:not([data-theme="light"]) .event--personal:hover{ box-shadow: 0 10px 26px rgba(59,130,246,0.22); }
+
+:root[data-theme="light"] .event--lecture:hover{ box-shadow: 0 10px 24px rgba(124,58,237,0.16); }
+:root[data-theme="light"] .event--assignment:hover{ box-shadow: 0 10px 24px rgba(245,158,11,0.14); }
+:root[data-theme="light"] .event--society:hover{ box-shadow: 0 10px 24px rgba(34,197,94,0.14); }
+:root[data-theme="light"] .event--personal:hover{ box-shadow: 0 10px 24px rgba(59,130,246,0.14); }
+
+/* Keyboard accessibility shows a focus ring  */
+.event:focus{
+  outline: none;
+}
+.event:focus-visible{
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.25);
+}

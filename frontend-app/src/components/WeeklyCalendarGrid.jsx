@@ -35,6 +35,10 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
   // Local events for MVP
   const [events, setEvents] = useState([]);
 
+  //Edit useState
+  const [editingId, setEditingId] = useState(null); // null = adding, otherwise editing
+
+
   // Form state
   const defaultStart = new Date(weekDates[0]);
   defaultStart.setHours(9, 0, 0, 0);
@@ -51,10 +55,37 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
 
   const [error, setError] = useState("");
 
-  function openModal() {
+  function openAddModal() {
+    setEditingId(null);
     setError("");
+    const start = new Date(weekDates[0]);
+    start.setHours(9, 0, 0, 0);
+    const end = new Date(weekDates[0]);
+    end.setHours(10, 0, 0, 0);
+
+    setForm({
+    title: "",
+    category: "lecture",
+    start: toLocalInputValue(start),
+    end: toLocalInputValue(end),
+    location: "",
+  });
     setIsModalOpen(true);
-  }
+}
+
+function openEditModal(ev) {
+  setEditingId(ev.id);
+  setError("");
+  setForm({
+    title: ev.title,
+    category: ev.category,
+    start: toLocalInputValue(new Date(ev.start)),
+    end: toLocalInputValue(new Date(ev.end)),
+    location: ev.location || "",
+  });
+  setIsModalOpen(true);
+}
+
 
   function closeModal() {
     setIsModalOpen(false);
@@ -66,19 +97,46 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
     setForm((f) => ({ ...f, [name]: value }));
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+  function handleDelete() {
+  if (!editingId) return;
+  setEvents((prev) => prev.filter((ev) => ev.id !== editingId));
+  closeModal();
+  setEditingId(null);
+}
 
-    const startDate = new Date(form.start);
-    const endDate = new Date(form.end);
+function handleSubmit(e) {
+  e.preventDefault();
+  setError("");
 
-    if (!form.title.trim()) return setError("Title is required.");
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      return setError("Enter valid start and end times.");
-    }
-    if (endDate <= startDate) return setError("End time must be after start time.");
+  const startDate = new Date(form.start);
+  const endDate = new Date(form.end);
 
+  if (!form.title.trim()) return setError("Title is required.");
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return setError("Please enter valid start and end times.");
+  }
+  if (endDate <= startDate) return setError("End time must be after start time.");
+
+  // Optionalconflict detection here
+
+  if (editingId) {
+    // EDIT existing
+    setEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === editingId
+          ? {
+              ...ev,
+              title: form.title.trim(),
+              category: form.category,
+              start: startDate.toISOString(),
+              end: endDate.toISOString(),
+              location: form.location.trim(),
+            }
+          : ev
+      )
+    );
+  } else {
+    // ADD new
     const newEvent = {
       id: crypto.randomUUID(),
       title: form.title.trim(),
@@ -87,13 +145,14 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
       end: endDate.toISOString(),
       location: form.location.trim(),
     };
-
     setEvents((prev) => [...prev, newEvent]);
-    closeModal();
-
-    // Reset form for next time (keep same times)
-    setForm((f) => ({ ...f, title: "", location: "" }));
   }
+
+  closeModal();
+  setEditingId(null);
+  setForm((f) => ({ ...f, title: "", location: "" }));
+}
+
 
   function eventsForDay(dayDate) {
     return events
@@ -126,7 +185,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
 
-          <button className="week__btn" type="button" onClick={openModal}>
+          <button className="week__btn" type="button" onClick={openAddModal}>
             + Add event
           </button>
         </div>
@@ -161,7 +220,14 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
                       const s = new Date(ev.start);
                       const en = new Date(ev.end);
                       return (
-                        <div key={ev.id} className={`event event--${ev.category}`}>
+                        <div key={ev.id} className={`event event--${ev.category}`}
+                        role = "button"
+                        tabIndex={0}
+                        onClick={() => openEditModal(ev)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") openEditModal(ev);
+                        }}
+                        >
                           <div className="event__title">{ev.title}</div>
                           <div className="event__meta">
                             {formatTime(s)}–{formatTime(en)}
@@ -183,7 +249,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
         <div className="modal" role="dialog" aria-modal="true" onMouseDown={closeModal}>
           <div className="modal__panel" onMouseDown={(e) => e.stopPropagation()}>
             <div className="modal__header">
-              <h2 className="modal__title">Add event</h2>
+              <h2 className="modal__title">{editingId ? "Edit event" : "Add event"}</h2>
               <button className="modal__close" type="button" onClick={closeModal}>
                 ✕
               </button>
@@ -249,13 +315,21 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
               {error && <div className="form__error">{error}</div>}
 
               <div className="form__actions">
-                <button className="week__iconBtn" type="button" onClick={closeModal}>
-                  Cancel
-                </button>
-                <button className="week__btn" type="submit">
-                  Save
-                </button>
-              </div>
+                {editingId && (
+                  <button className="dangerBtn" type="button" onClick={handleDelete}>
+                    Delete
+                  </button>
+              )}
+
+              <button className="week__iconBtn" type="button" onClick={closeModal}>
+              Cancel
+              </button>
+
+              <button className="week__btn" type="submit">
+                {editingId ? "Save changes" : "Save"}
+              </button>
+            </div>
+
             </form>
           </div>
         </div>
