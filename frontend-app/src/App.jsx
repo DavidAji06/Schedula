@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import WeeklyCalendarGrid from "./components/WeeklyCalendarGrid";
+import MonthlyCalendarGrid from "./components/MonthlyCalendarGrid";
 
 function getInitialTheme() {
   const saved = localStorage.getItem("theme");
@@ -11,6 +12,8 @@ function getInitialTheme() {
 
 export default function App() {
   const [theme, setTheme] = useState(getInitialTheme);
+  const [view, setView] = useState("week"); // "week" | "month"
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -21,10 +24,27 @@ export default function App() {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
   }
 
-  return (
+  function toggleView() {
+    setView((v) => (v === "week" ? "month" : "week"));
+  }
+
+  return view === "week" ? (
     <WeeklyCalendarGrid
       theme={theme}
       onToggleTheme={toggleTheme}
+      view={view}
+      onToggleView={toggleView}
+      events={events}
+      setEvents={setEvents}
+    />
+  ) : (
+    <MonthlyCalendarGrid
+      theme={theme}
+      onToggleTheme={toggleTheme}
+      view={view}
+      onToggleView={toggleView}
+      events={events}
+      setEvents={setEvents}
     />
   );
 }

@@ -28,12 +28,11 @@ function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function WeeklyCalendarGrid({ theme, onToggleTheme }) {
-  const weekDates = useMemo(() => getWeekDates(new Date()), []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   // Local events for MVP
-  const [events, setEvents] = useState([]);
+  export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
+    const weekDates = useMemo(() => getWeekDates(new Date()), []);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   //Edit useState
   const [editingId, setEditingId] = useState(null); // null = adding, otherwise editing
@@ -183,6 +182,10 @@ function handleSubmit(e) {
         <div className="week__actions">
           <button className="week__iconBtn" type="button" onClick={onToggleTheme}>
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+
+          <button className="week__iconBtn" type="button" onClick={onToggleView}>
+            {view === "week" ? "🗓️ Month" : "📆 Week"}
           </button>
 
           <button className="week__btn" type="button" onClick={openAddModal}>
