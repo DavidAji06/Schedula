@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import "./WeeklyCalendarGrid.css";
+import EventModal from "./EventModal";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -18,148 +19,53 @@ function getWeekDates(startDate = new Date()) {
   return week;
 }
 
-function toLocalInputValue(d) {
-  // yyyy-MM-ddTHH:mm (for <input type="datetime-local">)
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-  // Local events for MVP
-  export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
-    const weekDates = useMemo(() => getWeekDates(new Date()), []);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
+  const weekDates = useMemo(() => getWeekDates(new Date()), []);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
 
+  const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
 
-  //Edit useState
-  const [editingId, setEditingId] = useState(null); // null = adding, otherwise editing
-
-
-  // Form state
-  const defaultStart = new Date(weekDates[0]);
-  defaultStart.setHours(9, 0, 0, 0);
-  const defaultEnd = new Date(weekDates[0]);
-  defaultEnd.setHours(10, 0, 0, 0);
-
-  const [form, setForm] = useState({
-    title: "",
-    category: "lecture",
-    start: toLocalInputValue(defaultStart),
-    end: toLocalInputValue(defaultEnd),
-    location: "",
-  });
-
-  const [error, setError] = useState("");
-
-  function openAddModal() {
+  function openAddForDate(date) {
     setEditingId(null);
-    setError("");
-    const start = new Date(weekDates[0]);
-    start.setHours(9, 0, 0, 0);
-    const end = new Date(weekDates[0]);
-    end.setHours(10, 0, 0, 0);
-
-    setForm({
-    title: "",
-    category: "lecture",
-    start: toLocalInputValue(start),
-    end: toLocalInputValue(end),
-    location: "",
-  });
-    setIsModalOpen(true);
-}
-
-function openEditModal(ev) {
-  setEditingId(ev.id);
-  setError("");
-  setForm({
-    title: ev.title,
-    category: ev.category,
-    start: toLocalInputValue(new Date(ev.start)),
-    end: toLocalInputValue(new Date(ev.end)),
-    location: ev.location || "",
-  });
-  setIsModalOpen(true);
-}
-
-
-  function closeModal() {
-    setIsModalOpen(false);
-    setError("");
+    setSelectedDate(date);
+    setModalOpen(true);
   }
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+  function openEdit(ev) {
+    setEditingId(ev.id);
+    setSelectedDate(new Date(ev.start));
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingId(null);
+  }
+
+  function handleSave(payload) {
+    if (editingId) {
+      setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)));
+    } else {
+      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...payload }]);
+    }
+    closeModal();
   }
 
   function handleDelete() {
-  if (!editingId) return;
-  setEvents((prev) => prev.filter((ev) => ev.id !== editingId));
-  closeModal();
-  setEditingId(null);
-}
-
-function handleSubmit(e) {
-  e.preventDefault();
-  setError("");
-
-  const startDate = new Date(form.start);
-  const endDate = new Date(form.end);
-
-  if (!form.title.trim()) return setError("Title is required.");
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return setError("Please enter valid start and end times.");
+    if (!editingId) return;
+    setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    closeModal();
   }
-  if (endDate <= startDate) return setError("End time must be after start time.");
-
-  // Optionalconflict detection here
-
-  if (editingId) {
-    // EDIT existing
-    setEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === editingId
-          ? {
-              ...ev,
-              title: form.title.trim(),
-              category: form.category,
-              start: startDate.toISOString(),
-              end: endDate.toISOString(),
-              location: form.location.trim(),
-            }
-          : ev
-      )
-    );
-  } else {
-    // ADD new
-    const newEvent = {
-      id: crypto.randomUUID(),
-      title: form.title.trim(),
-      category: form.category,
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
-      location: form.location.trim(),
-    };
-    setEvents((prev) => [...prev, newEvent]);
-  }
-
-  closeModal();
-  setEditingId(null);
-  setForm((f) => ({ ...f, title: "", location: "" }));
-}
-
 
   function eventsForDay(dayDate) {
     return events
-      .map((ev) => ({
-        ...ev,
-        startD: new Date(ev.start),
-        endD: new Date(ev.end),
-      }))
+      .map((ev) => ({ ...ev, startD: new Date(ev.start), endD: new Date(ev.end) }))
       .filter((ev) => isSameDay(ev.startD, dayDate))
       .sort((a, b) => a.startD - b.startD);
   }
@@ -170,6 +76,25 @@ function handleSubmit(e) {
 
   return (
     <div className="week">
+      <EventModal
+        open={modalOpen}
+        mode={editingId ? "edit" : "add"}
+        initialStart={(() => {
+          const d = new Date(selectedDate);
+          d.setHours(9, 0, 0, 0);
+          return d;
+        })()}
+        initialEnd={(() => {
+          const d = new Date(selectedDate);
+          d.setHours(10, 0, 0, 0);
+          return d;
+        })()}
+        eventToEdit={eventToEdit}
+        onClose={closeModal}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
+
       <header className="week__topbar">
         <div>
           <h1 className="week__title">Weekly Timetable</h1>
@@ -188,7 +113,7 @@ function handleSubmit(e) {
             {view === "week" ? "🗓️ Month" : "📆 Week"}
           </button>
 
-          <button className="week__btn" type="button" onClick={openAddModal}>
+          <button className="week__btn" type="button" onClick={() => openAddForDate(new Date())}>
             + Add event
           </button>
         </div>
@@ -214,7 +139,7 @@ function handleSubmit(e) {
             const dayEvents = eventsForDay(dayDate);
 
             return (
-              <div key={label} className="cell cell--col">
+              <div key={label} className="cell cell--col" onDoubleClick={() => openAddForDate(dayDate)}>
                 {dayEvents.length === 0 ? (
                   <div className="cell__empty">No events</div>
                 ) : (
@@ -223,13 +148,15 @@ function handleSubmit(e) {
                       const s = new Date(ev.start);
                       const en = new Date(ev.end);
                       return (
-                        <div key={ev.id} className={`event event--${ev.category}`}
-                        role = "button"
-                        tabIndex={0}
-                        onClick={() => openEditModal(ev)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") openEditModal(ev);
-                        }}
+                        <div
+                          key={ev.id}
+                          className={`event event--${ev.category}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => openEdit(ev)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") openEdit(ev);
+                          }}
                         >
                           <div className="event__title">{ev.title}</div>
                           <div className="event__meta">
@@ -246,97 +173,6 @@ function handleSubmit(e) {
           })}
         </div>
       </section>
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="modal" role="dialog" aria-modal="true" onMouseDown={closeModal}>
-          <div className="modal__panel" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h2 className="modal__title">{editingId ? "Edit event" : "Add event"}</h2>
-              <button className="modal__close" type="button" onClick={closeModal}>
-                ✕
-              </button>
-            </div>
-
-            <form className="form" onSubmit={handleSubmit}>
-              <label className="field">
-                <span className="field__label">Title</span>
-                <input
-                  className="field__input"
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  placeholder="e.g. COMP11120 Lecture"
-                />
-              </label>
-
-              <label className="field">
-                <span className="field__label">Category</span>
-                <select className="field__input" name="category" value={form.category} onChange={handleChange}>
-                  <option value="lecture">Lecture</option>
-                  <option value="assignment">Assignment</option>
-                  <option value="social">Social</option>
-                  <option value="personal">Personal</option>
-                </select>
-              </label>
-
-              <div className="form__row">
-                <label className="field">
-                  <span className="field__label">Start</span>
-                  <input
-                    className="field__input"
-                    type="datetime-local"
-                    name="start"
-                    value={form.start}
-                    onChange={handleChange}
-                  />
-                </label>
-
-                <label className="field">
-                  <span className="field__label">End</span>
-                  <input
-                    className="field__input"
-                    type="datetime-local"
-                    name="end"
-                    value={form.end}
-                    onChange={handleChange}
-                  />
-                </label>
-              </div>
-
-              <label className="field">
-                <span className="field__label">Location (optional)</span>
-                <input
-                  className="field__input"
-                  name="location"
-                  value={form.location}
-                  onChange={handleChange}
-                  placeholder="e.g. Kilburn LT1"
-                />
-              </label>
-
-              {error && <div className="form__error">{error}</div>}
-
-              <div className="form__actions">
-                {editingId && (
-                  <button className="dangerBtn" type="button" onClick={handleDelete}>
-                    Delete
-                  </button>
-              )}
-
-              <button className="week__iconBtn" type="button" onClick={closeModal}>
-              Cancel
-              </button>
-
-              <button className="week__btn" type="submit">
-                {editingId ? "Save changes" : "Save"}
-              </button>
-            </div>
-
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

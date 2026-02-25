@@ -1,29 +1,24 @@
 import { useMemo, useState } from "react";
 import "./MonthlyCalendarGrid.css";
+import EventModal from "./EventModal";
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function startOfMonth(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
-
 function endOfMonth(d) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0);
 }
-
-// Monday-based week: Mon=0..Sun=6
 function mondayIndex(jsDay) {
   return (jsDay + 6) % 7;
 }
-
 function buildMonthGrid(currentMonth) {
   const first = startOfMonth(currentMonth);
   const last = endOfMonth(currentMonth);
-
   const firstPad = mondayIndex(first.getDay());
   const totalDays = last.getDate();
 
-  // 42 cells (6 rows x 7 cols) is standard
   const cells = [];
   for (let i = 0; i < 42; i++) {
     const dayNum = i - firstPad + 1;
@@ -33,25 +28,50 @@ function buildMonthGrid(currentMonth) {
   }
   return cells;
 }
-
 function isSameDay(a, b) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function MonthlyCalendarGrid({
-  theme,
-  onToggleTheme,
-  view,
-  onToggleView,
-  events,
-}) {
+export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
   const [monthCursor, setMonthCursor] = useState(() => new Date());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   const cells = useMemo(() => buildMonthGrid(monthCursor), [monthCursor]);
+  const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
+
+  function openAddForDate(date) {
+    setEditingId(null);
+    setSelectedDate(date);
+    setModalOpen(true);
+  }
+
+  function openEdit(ev) {
+    setEditingId(ev.id);
+    setSelectedDate(new Date(ev.start));
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingId(null);
+  }
+
+  function handleSave(payload) {
+    if (editingId) {
+      setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)));
+    } else {
+      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...payload }]);
+    }
+    closeModal();
+  }
+
+  function handleDelete() {
+    if (!editingId) return;
+    setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    closeModal();
+  }
 
   function prevMonth() {
     setMonthCursor((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -72,6 +92,25 @@ export default function MonthlyCalendarGrid({
 
   return (
     <div className="month">
+      <EventModal
+        open={modalOpen}
+        mode={editingId ? "edit" : "add"}
+        initialStart={(() => {
+          const d = new Date(selectedDate);
+          d.setHours(9, 0, 0, 0);
+          return d;
+        })()}
+        initialEnd={(() => {
+          const d = new Date(selectedDate);
+          d.setHours(10, 0, 0, 0);
+          return d;
+        })()}
+        eventToEdit={eventToEdit}
+        onClose={closeModal}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
+
       <header className="month__topbar">
         <div>
           <h1 className="month__title">Monthly Timetable</h1>
@@ -85,6 +124,13 @@ export default function MonthlyCalendarGrid({
 
           <button className="month__iconBtn" type="button" onClick={onToggleView}>
             📆 Week
+          </button>
+          <button
+            className="month__btn"
+            type="button"
+            onClick={() => openAddForDate(new Date())}
+          >
+            + Add event
           </button>
         </div>
       </header>
@@ -116,18 +162,24 @@ export default function MonthlyCalendarGrid({
                   inMonth ? "" : "monthCell--dim",
                   isToday ? "monthCell--today" : "",
                 ].join(" ")}
+                onDoubleClick={() => openAddForDate(date)}
               >
                 <div className="monthCell__num">{date.getDate()}</div>
 
                 <div className="monthCell__events">
                   {dayEvents.slice(0, 3).map((ev) => (
-                    <div key={ev.id} className={`monthChip monthChip--${ev.category}`}>
+                    <div
+                      key={ev.id}
+                      className={`monthChip monthChip--${ev.category}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openEdit(ev)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openEdit(ev)}
+                    >
                       {ev.title}
                     </div>
                   ))}
-                  {dayEvents.length > 3 && (
-                    <div className="monthMore">+{dayEvents.length - 3} more</div>
-                  )}
+                  {dayEvents.length > 3 && <div className="monthMore">+{dayEvents.length - 3} more</div>}
                 </div>
               </div>
             );
