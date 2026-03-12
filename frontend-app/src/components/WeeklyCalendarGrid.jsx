@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "./WeeklyCalendarGrid.css";
 import EventModal from "./EventModal";
 
@@ -28,6 +28,13 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [now, setNow] = useState(() => new Date());
+
+  // Tick every minute so countdowns stay fresh
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
 
@@ -61,6 +68,40 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
     if (!editingId) return;
     setEvents((prev) => prev.filter((e) => e.id !== editingId));
     closeModal();
+  }
+
+  // Returns a Set of event IDs that conflict with at least one other event on the same day
+  function getConflictIds(dayEvents) {
+    const ids = new Set();
+    for (let i = 0; i < dayEvents.length; i++) {
+      for (let j = i + 1; j < dayEvents.length; j++) {
+        const a = dayEvents[i], b = dayEvents[j];
+        // Overlap when a starts before b ends AND b starts before a ends
+        if (a.startD < b.endD && b.startD < a.endD) {
+          ids.add(a.id);
+          ids.add(b.id);
+        }
+      }
+    }
+    return ids;
+  }
+
+  function toggleCountdown(e, evId) {
+    e.stopPropagation();
+    setEvents((prev) =>
+      prev.map((ev) => ev.id === evId ? { ...ev, countdown: !ev.countdown } : ev)
+    );
+  }
+
+  function formatCountdown(start) {
+    const diffMs = new Date(start) - now;
+    if (diffMs < 0) return null; // past
+    const diffMins = Math.floor(diffMs / 60_000);
+    if (diffMins < 60) return `in ${diffMins}m`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `in ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `in ${diffDays}d`;
   }
 
   function eventsForDay(dayDate) {
@@ -144,28 +185,48 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
                   <div className="cell__empty">No events</div>
                 ) : (
                   <div className="events">
-                    {dayEvents.map((ev) => {
-                      const s = new Date(ev.start);
-                      const en = new Date(ev.end);
-                      return (
-                        <div
-                          key={ev.id}
-                          className={`event event--${ev.category}`}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => openEdit(ev)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") openEdit(ev);
-                          }}
-                        >
-                          <div className="event__title">{ev.title}</div>
-                          <div className="event__meta">
-                            {formatTime(s)}–{formatTime(en)}
-                            {ev.location ? ` • ${ev.location}` : ""}
+                    {(() => {
+                      const conflictIds = getConflictIds(dayEvents);
+                      return dayEvents.map((ev) => {
+                        const s = new Date(ev.start);
+                        const en = new Date(ev.end);
+                        const isConflict = conflictIds.has(ev.id);
+                        const countdown = ev.countdown ? formatCountdown(ev.start) : null;
+                        return (
+                          <div
+                            key={ev.id}
+                            className={`event event--${ev.category}${isConflict ? " event--conflict" : ""}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openEdit(ev)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") openEdit(ev);
+                            }}
+                          >
+                            <div className="event__title">
+                              {isConflict && <span className="event__conflict-icon" title="Time conflict">⚠️</span>}
+                              {ev.title}
+                            </div>
+                            <div className="event__meta">
+                              {formatTime(s)}–{formatTime(en)}
+                              {ev.location ? ` • ${ev.location}` : ""}
+                            </div>
+                            <div className="event__footer">
+                              {countdown && (
+                                <span className="event__countdown">{countdown}</span>
+                              )}
+                              <button
+                                className={`event__bell${ev.countdown ? " event__bell--on" : ""}`}
+                                title={ev.countdown ? "Remove countdown" : "Add countdown"}
+                                onClick={(e) => toggleCountdown(e, ev.id)}
+                              >
+                                🔔
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>

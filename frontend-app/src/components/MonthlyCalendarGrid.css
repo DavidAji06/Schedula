@@ -131,3 +131,80 @@
   font-size: 12px;
   color: var(--muted);
 }
+
+/* Conflict */
+.monthChip--conflict{
+  border-color: rgba(239,68,68,0.6) !important;
+  background: rgba(239,68,68,0.10) !important;
+  animation: chip-pulse 2s ease-in-out infinite;
+}
+
+@keyframes chip-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%       { box-shadow: 0 0 0 3px rgba(239,68,68,0.18); }
+}
+
+.monthChip__warn{
+  font-size: 10px;
+  margin-right: 3px;
+}
+
+/* Chip layout */
+.monthChip{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.monthChip__title{
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthChip__right{
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.monthChip__countdown{
+  font-size: 10px;
+  font-weight: 600;
+  color: #a78bfa;
+  background: rgba(124,58,237,0.15);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 20px;
+  padding: 1px 5px;
+}
+
+:root[data-theme="light"] .monthChip__countdown{
+  color: #6d28d9;
+  background: rgba(124,58,237,0.10);
+}
+
+.monthChip__bell{
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 11px;
+  opacity: 0.3;
+  transition: opacity 140ms, transform 140ms;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.monthChip__bell:hover{
+  opacity: 0.75;
+  transform: scale(1.2);
+  border-color: transparent;
+}
+
+.monthChip__bell--on{
+  opacity: 1;
+  filter: drop-shadow(0 0 3px rgba(167,139,250,0.7));
+}
