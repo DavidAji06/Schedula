@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import "./MonthlyCalendarGrid.css";
 import EventModal from "./EventModal";
 
@@ -40,12 +40,6 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
 
   const cells = useMemo(() => buildMonthGrid(monthCursor), [monthCursor]);
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   function openAddForDate(date) {
     setEditingId(null);
@@ -77,37 +71,6 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
     if (!editingId) return;
     setEvents((prev) => prev.filter((e) => e.id !== editingId));
     closeModal();
-  }
-
-  function getConflictIds(dayEvents) {
-    const ids = new Set();
-    for (let i = 0; i < dayEvents.length; i++) {
-      for (let j = i + 1; j < dayEvents.length; j++) {
-        const a = dayEvents[i], b = dayEvents[j];
-        if (new Date(a.start) < new Date(b.end) && new Date(b.start) < new Date(a.end)) {
-          ids.add(a.id);
-          ids.add(b.id);
-        }
-      }
-    }
-    return ids;
-  }
-
-  function toggleCountdown(e, evId) {
-    e.stopPropagation();
-    setEvents((prev) =>
-      prev.map((ev) => ev.id === evId ? { ...ev, countdown: !ev.countdown } : ev)
-    );
-  }
-
-  function formatCountdown(start) {
-    const diffMs = new Date(start) - now;
-    if (diffMs < 0) return null;
-    const diffMins = Math.floor(diffMs / 60_000);
-    if (diffMins < 60) return `in ${diffMins}m`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `in ${diffHours}h`;
-    return `in ${Math.floor(diffHours / 24)}d`;
   }
 
   function prevMonth() {
@@ -204,41 +167,20 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
                 <div className="monthCell__num">{date.getDate()}</div>
 
                 <div className="monthCell__events">
-                  {(() => {
-                    const conflictIds = getConflictIds(dayEvents);
-                    return (
-                      <>
-                        {dayEvents.slice(0, 3).map((ev) => {
-                          const isConflict = conflictIds.has(ev.id);
-                          const countdown = ev.countdown ? formatCountdown(ev.start) : null;
-                          return (
-                            <div
-                              key={ev.id}
-                              className={`monthChip monthChip--${ev.category}${isConflict ? " monthChip--conflict" : ""}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => openEdit(ev)}
-                              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openEdit(ev)}
-                            >
-                              <span className="monthChip__title">
-                                {isConflict && <span className="monthChip__warn">⚠️</span>}
-                                {ev.title}
-                              </span>
-                              <span className="monthChip__right">
-                                {countdown && <span className="monthChip__countdown">{countdown}</span>}
-                                <button
-                                  className={`monthChip__bell${ev.countdown ? " monthChip__bell--on" : ""}`}
-                                  title={ev.countdown ? "Remove countdown" : "Add countdown"}
-                                  onClick={(e) => toggleCountdown(e, ev.id)}
-                                >🔔</button>
-                              </span>
-                            </div>
-                          );
-                        })}
-                        {dayEvents.length > 3 && <div className="monthMore">+{dayEvents.length - 3} more</div>}
-                      </>
-                    );
-                  })()}
+                  {dayEvents.slice(0, 3).map((ev) => (
+                    <div
+                      key={ev.id}
+                      className={`monthChip monthChip--${ev.category}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openEdit(ev)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openEdit(ev)}
+                    >
+                      <span className="monthChip__time">{new Date(ev.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      {ev.title}
+                    </div>
+                  ))}
+                  {dayEvents.length > 3 && <div className="monthMore">+{dayEvents.length - 3} more</div>}
                 </div>
               </div>
             );
