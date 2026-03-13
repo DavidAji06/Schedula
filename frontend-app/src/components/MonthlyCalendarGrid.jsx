@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import "./MonthlyCalendarGrid.css";
 import EventModal from "./EventModal";
+import TodoSidebar from "./Todosidebar";
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -37,6 +38,7 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [todoOpen, setTodoOpen] = useState(false);
 
   const cells = useMemo(() => buildMonthGrid(monthCursor), [monthCursor]);
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
@@ -132,6 +134,10 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
           >
             + Add event
           </button>
+
+          <button className="week__iconBtn" type="button" onClick={() => setTodoOpen(true)}>
+            ✓ Tasks
+          </button>
         </div>
       </header>
 
@@ -187,6 +193,7 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
           })}
         </div>
       </section>
+      <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import "./WeeklyCalendarGrid.css";
 import EventModal from "./EventModal";
+import TodoSidebar from "./Todosidebar";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -9,6 +10,7 @@ function getWeekDates(startDate = new Date()) {
   const day = date.getDay(); // Sun=0..Sat=6
   const diffToMonday = (day === 0 ? -6 : 1) - day;
   date.setDate(date.getDate() + diffToMonday);
+  
 
   const week = [];
   for (let i = 0; i < 7; i++) {
@@ -29,6 +31,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
   const [editingId, setEditingId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [now, setNow] = useState(() => new Date());
+  const [todoOpen, setTodoOpen] = useState(false);
 
   // Tick every minute so countdowns stay fresh
   useEffect(() => {
@@ -157,6 +160,10 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
           <button className="week__btn" type="button" onClick={() => openAddForDate(new Date())}>
             + Add event
           </button>
+
+          <button className="week__iconBtn" type="button" onClick={() => setTodoOpen(true)}>
+            ✓ Tasks
+          </button>
         </div>
       </header>
 
@@ -234,6 +241,8 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
           })}
         </div>
       </section>
+
+      <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
     </div>
   );
 }
