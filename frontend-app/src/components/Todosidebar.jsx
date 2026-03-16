@@ -22,7 +22,20 @@ export default function TodoSidebar({ open, onClose }) {
   const [title, setTitle]     = useState("");
   const [priority, setPriority] = useState("medium");
   const [dueDate, setDueDate] = useState("");
+  const [priorityOpen, setPriorityOpen] = useState(false);
   const inputRef = useRef(null);
+  const priorityRef = useRef(null);
+
+  useEffect(() => {
+    if (!priorityOpen) return;
+    function handler(e) {
+      if (priorityRef.current && !priorityRef.current.contains(e.target)) {
+        setPriorityOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [priorityOpen]);
 
   // Focus input when sidebar opens
   useEffect(() => {
@@ -171,15 +184,39 @@ export default function TodoSidebar({ open, onClose }) {
             </button>
           </div>
           <div className="todo-add__meta">
-            <select
-              className="todo-add__select"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-            >
-              <option value="high">🔴 High priority</option>
-              <option value="medium">🟡 Medium priority</option>
-              <option value="low">🟢 Low priority</option>
-            </select>
+            <div className="todo-priority-picker" ref={priorityRef}>
+              <button
+                type="button"
+                className="todo-priority-trigger"
+                onClick={() => setPriorityOpen((o) => !o)}
+              >
+                <span className={`todo-priority-dot todo-priority-dot--${priority}`} />
+                <span className="todo-priority-trigger__label">
+                  {priority.charAt(0).toUpperCase() + priority.slice(1)} priority
+                </span>
+                <span className={`todo-priority-chevron${priorityOpen ? " todo-priority-chevron--open" : ""}`}>▾</span>
+              </button>
+              {priorityOpen && (
+                <div className="todo-priority-menu">
+                  {[
+                    { value: "high",   label: "High priority",   cls: "todo-priority-dot--high"   },
+                    { value: "medium", label: "Medium priority", cls: "todo-priority-dot--medium" },
+                    { value: "low",    label: "Low priority",    cls: "todo-priority-dot--low"    },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`todo-priority-option${priority === opt.value ? " todo-priority-option--active" : ""}`}
+                      onClick={() => { setPriority(opt.value); setPriorityOpen(false); }}
+                    >
+                      <span className={`todo-priority-dot ${opt.cls}`} />
+                      <span className="todo-priority-option__label">{opt.label}</span>
+                      {priority === opt.value && <span className="todo-priority-tick">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input
               className="todo-add__date"
               type="date"
