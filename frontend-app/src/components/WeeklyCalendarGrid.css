@@ -222,15 +222,54 @@
 .cell--col:hover { background: var(--surface3); }
 
 /* ── Empty ───────────────────────────────────────────────────── */
+/* ── Empty state ─────────────────────────────────────────────── */
 .cell__empty {
-  border: 1.5px dashed var(--line);
-  border-radius: 11px;
-  padding: 13px 8px;
-  color: var(--text3);
-  font-size: 11.5px;
-  text-align: center;
-  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 72px;
+  font-size: 0; /* hide "No events" text */
   user-select: none;
+  border-radius: 10px;
+  transition: background 200ms;
+  cursor: pointer;
+  position: relative;
+}
+
+/* + icon — always faintly visible */
+.cell__empty::before {
+  content: '+';
+  font-size: 22px;
+  font-weight: 200;
+  line-height: 1;
+  color: var(--line);
+  transition: color 180ms, transform 180ms;
+}
+
+/* hint text */
+.cell__empty::after {
+  content: 'Double-click to add';
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: transparent;
+  transition: color 180ms;
+}
+
+/* Reveal on column hover */
+.cell--col:hover .cell__empty {
+  background: rgba(124,58,237,0.04);
+}
+
+.cell--col:hover .cell__empty::before {
+  color: var(--text3);
+  transform: scale(1.15);
+}
+
+.cell--col:hover .cell__empty::after {
+  color: var(--text3);
 }
 
 /* ── Events ──────────────────────────────────────────────────── */
