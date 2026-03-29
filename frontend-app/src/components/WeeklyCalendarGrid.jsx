@@ -1,7 +1,52 @@
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "./WeeklyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const PX_PER_HOUR = 64;
+const PX_PER_MIN  = PX_PER_HOUR / 60;
+
+function minutesFromMidnight(date) {
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+// Assign columns to overlapping events so they sit side-by-side
+function layoutEvents(evs) {
+  const sorted = [...evs].sort((a, b) => a.startD - b.startD);
+  const columns = [];
+  const result = [];
+
+  for (const ev of sorted) {
+    let placed = false;
+    for (let col = 0; col < columns.length; col++) {
+      const last = columns[col];
+      if (last.endD <= ev.startD) {
+        columns[col] = ev;
+        result.push({ ...ev, col, totalCols: null });
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      columns.push(ev);
+      result.push({ ...ev, col: columns.length - 1, totalCols: null });
+    }
+  }
+
+  // Second pass: set totalCols for each event based on max overlapping column
+  return result.map((ev) => {
+    let maxCol = ev.col;
+    for (const other of result) {
+      if (other.startD < ev.endD && other.endD > ev.startD) {
+        maxCol = Math.max(maxCol, other.col);
+      }
+    }
+    return { ...ev, totalCols: maxCol + 1 };
+  });
+}
+
+
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -41,6 +86,16 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [now, setNow] = useState(() => new Date());
   const [todoOpen, setTodoOpen] = useState(false);
+  const scrollRef = React.useRef(null);
+
+  // Scroll to current time on mount
+  useEffect(() => {
+    if (scrollRef.current) {
+      const mins = new Date().getHours() * 60 + new Date().getMinutes();
+      const scrollTo = Math.max(0, mins * PX_PER_MIN - 120);
+      scrollRef.current.scrollTop = scrollTo;
+    }
+  }, []);
 
   // Tick every minute so countdowns stay fresh
   useEffect(() => {
@@ -76,9 +131,9 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
 
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
 
-  function openAddForDate(date) {
+  function openAddForDate(date, hour = 9) {
     setEditingId(null);
-    setSelectedDate(date);
+    setSelectedDate({ date, hour });
     setModalOpen(true);
   }
 
@@ -192,13 +247,13 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
         open={modalOpen}
         mode={editingId ? "edit" : "add"}
         initialStart={(() => {
-          const d = new Date(selectedDate);
-          d.setHours(9, 0, 0, 0);
+          const d = new Date(selectedDate.date || selectedDate);
+          d.setHours(selectedDate.hour ?? 9, 0, 0, 0);
           return d;
         })()}
         initialEnd={(() => {
-          const d = new Date(selectedDate);
-          d.setHours(10, 0, 0, 0);
+          const d = new Date(selectedDate.date || selectedDate);
+          d.setHours((selectedDate.hour ?? 9) + 1, 0, 0, 0);
           return d;
         })()}
         eventToEdit={eventToEdit}
@@ -247,78 +302,132 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
       <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
 
       <section className="week__card">
-        <div className="grid grid--header">
+        {/* ── Day header row ── */}
+        <div className="tg__header">
+          <div className="tg__gutter-corner" />
           {DAYS.map((label, i) => {
             const d = weekDates[i];
-            const isToday = new Date().toDateString() === d.toDateString();
+            const isToday = isSameDay(d, new Date());
             return (
-              <div key={label} className={`cell cell--head ${isToday ? "cell--today" : ""}`}>
-                <span className="cell__dow">{label}</span>
-                <span className="cell__date">{d.getDate()}</span>
+              <div key={label} className={`tg__head-cell${isToday ? " tg__head-cell--today" : ""}`}>
+                <span className="tg__dow">{label}</span>
+                <span className={`tg__date${isToday ? " tg__date--today" : ""}`}>{d.getDate()}</span>
               </div>
             );
           })}
         </div>
 
-        <div className="grid grid--body">
-          {DAYS.map((label, i) => {
-            const dayDate = weekDates[i];
-            const dayEvents = eventsForDay(dayDate);
+        {/* ── Scrollable time grid ── */}
+        <div className="tg__scroll" ref={scrollRef}>
+          <div className="tg__body">
 
-            return (
-              <div key={label} className="cell cell--col" onDoubleClick={() => openAddForDate(dayDate)}>
-                {dayEvents.length === 0 ? (
-                  <div className="cell__empty">No events</div>
-                ) : (
-                  <div className="events">
-                    {(() => {
-                      const conflictIds = getConflictIds(dayEvents);
-                      return dayEvents.map((ev) => {
-                        const s = new Date(ev.start);
-                        const en = new Date(ev.end);
-                        const isConflict = conflictIds.has(ev.id);
-                        const countdown = ev.countdown ? formatCountdown(ev.start) : null;
-                        return (
-                          <div
-                            key={ev.id}
-                            className={`event event--${ev.category}${isConflict ? " event--conflict" : ""}`}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => openEdit(ev)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") openEdit(ev);
-                            }}
-                          >
-                            <div className="event__title">
-                              {isConflict && <span className="event__conflict-icon" title="Time conflict">⚠️</span>}
-                              {ev.recurringId && <span className="event__recur-icon" title="Recurring">🔁</span>}
-                              {ev.title}
-                            </div>
-                            <div className="event__meta">
-                              {formatTime(s)}–{formatTime(en)}
-                              {ev.location ? ` • ${ev.location}` : ""}
-                            </div>
-                            <div className="event__footer">
-                              {countdown && (
-                                <span className="event__countdown">{countdown}</span>
-                              )}
-                              <button
-                                className={`event__bell${ev.countdown ? " event__bell--on" : ""}`}
-                                title={ev.countdown ? "Remove countdown" : "Add countdown"}
-                                onClick={(e) => toggleCountdown(e, ev.id)}
-                              >
-                                🔔
-                              </button>
-                            </div>
+            {/* Hour gutter */}
+            <div className="tg__gutter">
+              {HOURS.map((h) => (
+                <div key={h} className="tg__gutter-cell">
+                  {h !== 0 && (
+                    <span className="tg__hour-label">
+                      {String(h).padStart(2, "0")}:00
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Day columns */}
+            {DAYS.map((label, i) => {
+              const dayDate = weekDates[i];
+              const isToday = isSameDay(dayDate, new Date());
+              const rawEvents = events
+                .map((ev) => ({ ...ev, startD: new Date(ev.start), endD: new Date(ev.end) }))
+                .filter((ev) => isSameDay(ev.startD, dayDate));
+              const laid = layoutEvents(rawEvents);
+              const conflictIds = (() => {
+                const ids = new Set();
+                for (let a = 0; a < laid.length; a++)
+                  for (let b = a + 1; b < laid.length; b++)
+                    if (laid[a].startD < laid[b].endD && laid[b].startD < laid[a].endD) {
+                      ids.add(laid[a].id); ids.add(laid[b].id);
+                    }
+                return ids;
+              })();
+
+              // Now indicator
+              const nowMins = minutesFromMidnight(now);
+
+              return (
+                <div
+                  key={label}
+                  className={`tg__col${isToday ? " tg__col--today" : ""}`}
+                  onClick={(e) => {
+                    // Calculate hour from click position
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const y = e.clientY - rect.top + e.currentTarget.closest(".tg__scroll").scrollTop;
+                    const hour = Math.floor(y / PX_PER_HOUR);
+                    openAddForDate(dayDate, Math.min(23, Math.max(0, hour)));
+                  }}
+                >
+                  {/* Hour lines */}
+                  {HOURS.map((h) => (
+                    <div key={h} className="tg__hour-line" style={{ top: h * PX_PER_HOUR }} />
+                  ))}
+
+                  {/* Now indicator */}
+                  {isToday && (
+                    <div className="tg__now" style={{ top: nowMins * PX_PER_MIN }}>
+                      <div className="tg__now-dot" />
+                      <div className="tg__now-line" />
+                    </div>
+                  )}
+
+                  {/* Events */}
+                  {laid.map((ev) => {
+                    const startMins = minutesFromMidnight(ev.startD);
+                    const endMins   = minutesFromMidnight(ev.endD);
+                    const duration  = Math.max(endMins - startMins, 15);
+                    const top       = startMins * PX_PER_MIN;
+                    const height    = duration * PX_PER_MIN;
+                    const width     = `calc((100% - 4px) / ${ev.totalCols})`;
+                    const left      = `calc(${ev.col} * (100% - 4px) / ${ev.totalCols} + 2px)`;
+                    const isConflict = conflictIds.has(ev.id);
+                    const countdown  = ev.countdown ? formatCountdown(ev.start) : null;
+
+                    return (
+                      <div
+                        key={ev.id}
+                        className={`tg__event event--${ev.category}${isConflict ? " event--conflict" : ""}`}
+                        style={{ top, height, width, left }}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); openEdit(ev); }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEdit(ev); }}
+                      >
+                        <div className="tg__event-title">
+                          {isConflict && <span className="event__conflict-icon">⚠️</span>}
+                          {ev.recurringId && <span className="event__recur-icon">🔁</span>}
+                          {ev.title}
+                        </div>
+                        {height >= 36 && (
+                          <div className="tg__event-time">
+                            {formatTime(ev.startD)}–{formatTime(ev.endD)}
+                            {ev.location ? ` · ${ev.location}` : ""}
                           </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                        )}
+                        {height >= 56 && countdown && (
+                          <span className="event__countdown">{countdown}</span>
+                        )}
+                        <button
+                          className={`event__bell${ev.countdown ? " event__bell--on" : ""}`}
+                          onClick={(e) => toggleCountdown(e, ev.id)}
+                          title={ev.countdown ? "Remove countdown" : "Add countdown"}
+                        >🔔</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
     </div>
