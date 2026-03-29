@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "./Todosidebar.css";
+import "../styles/components/todoSidebar.css";
 
 const PRIORITIES = ["high", "medium", "low"];
 

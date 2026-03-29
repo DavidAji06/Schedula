@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState } from "react";
+import Landing from "./pages/Landing";
 import WeeklyCalendarGrid from "./components/WeeklyCalendarGrid";
 import MonthlyCalendarGrid from "./components/MonthlyCalendarGrid";
 
@@ -6,28 +8,27 @@ export default function App() {
   const [view, setView] = useState("week");
   const [events, setEvents] = useState([]);
 
-  // Force dark theme permanently
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", "dark");
-  }, []);
 
   function toggleView() {
     setView((v) => (v === "week" ? "month" : "week"));
   }
 
-  return view === "week" ? (
-    <WeeklyCalendarGrid
-      view={view}
-      onToggleView={toggleView}
-      events={events}
-      setEvents={setEvents}
-    />
-  ) : (
-    <MonthlyCalendarGrid
-      view={view}
-      onToggleView={toggleView}
-      events={events}
-      setEvents={setEvents}
-    />
+  const calendarProps = { view, onToggleView: toggleView, events, setEvents };
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route
+          path="/app"
+          element={
+            view === "week"
+              ? <WeeklyCalendarGrid {...calendarProps} />
+              : <MonthlyCalendarGrid {...calendarProps} />
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

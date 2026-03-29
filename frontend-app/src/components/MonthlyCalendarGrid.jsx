@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import "./MonthlyCalendarGrid.css";
+import "../styles/components/monthlyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
 

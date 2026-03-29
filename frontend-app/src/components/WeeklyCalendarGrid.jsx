@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import "./WeeklyCalendarGrid.css";
+import "../styles/components/weeklyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
 

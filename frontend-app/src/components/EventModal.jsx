@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./EventModal.css";
+import "../styles/components/eventModal.css";
 
 /**
  * Reusable Add/Edit Event modal.
