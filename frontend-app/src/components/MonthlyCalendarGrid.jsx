@@ -148,9 +148,9 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
         </div>
 
         <div className="month__actions">
-          <button className="month__iconBtn" type="button" onClick={onToggleTheme}>
+          {/* <button className="month__iconBtn" type="button" onClick={onToggleTheme}>
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
+          </button> */}
 
           <button className="month__iconBtn" type="button" onClick={onToggleView}>
             📆 Week

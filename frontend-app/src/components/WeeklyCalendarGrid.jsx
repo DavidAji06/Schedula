@@ -26,7 +26,16 @@ function isSameDay(a, b) {
 }
 
 export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
-  const weekDates = useMemo(() => getWeekDates(new Date()), []);
+  const [weekStart, setWeekStart] = useState(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    today.setDate(today.getDate() + diff);
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+
+  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -38,6 +47,32 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  function prevWeek() {
+    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
+  }
+
+  function nextWeek() {
+    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+  }
+
+  function goToToday() {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    today.setDate(today.getDate() + diff);
+    today.setHours(0, 0, 0, 0);
+    setWeekStart(today);
+  }
+
+  const isThisWeek = isSameDay(weekDates[0], (() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const mon = new Date(today);
+    mon.setDate(today.getDate() + diff);
+    return mon;
+  })());
 
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
 
@@ -173,18 +208,27 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
       />
 
       <header className="week__topbar">
-        <div>
-          <h1 className="week__title">Weekly Timetable</h1>
-          <p className="week__subtitle">
-            {weekDates[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} –{" "}
-            {weekDates[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-          </p>
+        <div className="week__topbar__left">
+          <div>
+            <h1 className="week__title">Weekly Timetable</h1>
+            <p className="week__subtitle">
+              {weekDates[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} –{" "}
+              {weekDates[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </p>
+          </div>
+          <div className="week__nav">
+            <button className="week__navBtn" type="button" onClick={prevWeek} aria-label="Previous week">←</button>
+            {!isThisWeek && (
+              <button className="week__todayBtn" type="button" onClick={goToToday}>Today</button>
+            )}
+            <button className="week__navBtn" type="button" onClick={nextWeek} aria-label="Next week">→</button>
+          </div>
         </div>
 
         <div className="week__actions">
-          <button className="week__iconBtn" type="button" onClick={onToggleTheme}>
+          {/* <button className="week__iconBtn" type="button" onClick={onToggleTheme}>
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
+          </button> */}
 
           <button className="week__iconBtn" type="button" onClick={onToggleView}>
             {view === "week" ? "🗓️ Month" : "📆 Week"}
