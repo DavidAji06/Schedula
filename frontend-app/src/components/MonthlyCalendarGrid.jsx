@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import "./MonthlyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
@@ -61,17 +62,44 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
   }
 
   function handleSave(payload) {
+    const { _series, _editScope, ...base } = payload;
+
     if (editingId) {
-      setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)));
+      if (_editScope === "all" && base.recurringId) {
+        setEvents((prev) => prev.map((e) =>
+          e.recurringId === base.recurringId
+            ? { ...e, title: base.title, category: base.category, location: base.location }
+            : e
+        ));
+      } else {
+        setEvents((prev) => prev.map((e) =>
+          e.id === editingId ? { ...e, ...base } : e
+        ));
+      }
+    } else if (_series) {
+      setEvents((prev) => [
+        ...prev,
+        ..._series.map((ev) => ({ id: crypto.randomUUID(), ...ev })),
+      ]);
     } else {
-      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...payload }]);
+      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...base }]);
     }
     closeModal();
   }
 
   function handleDelete() {
     if (!editingId) return;
-    setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    const ev = events.find((e) => e.id === editingId);
+    if (ev?.recurringId) {
+      const all = window.confirm("Delete all events in this recurring series?\n\nOK = delete all   Cancel = delete only this one");
+      if (all) {
+        setEvents((prev) => prev.filter((e) => e.recurringId !== ev.recurringId));
+      } else {
+        setEvents((prev) => prev.filter((e) => e.id !== editingId));
+      }
+    } else {
+      setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    }
     closeModal();
   }
 
@@ -134,8 +162,7 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
           >
             + Add event
           </button>
-
-          <button className="week__iconBtn" type="button" onClick={() => setTodoOpen(true)}>
+          <button className="month__iconBtn" type="button" onClick={() => setTodoOpen(true)}>
             ✓ Tasks
           </button>
         </div>
@@ -193,7 +220,11 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
           })}
         </div>
       </section>
-      <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
+
+      {createPortal(
+        <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />,
+        document.body
+      )}
     </div>
   );
 }

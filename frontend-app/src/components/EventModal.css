@@ -111,3 +111,60 @@
 @media (max-width: 520px){
   .form__row{ grid-template-columns: 1fr; }
 }
+/* ── Recurring fields ────────────────────────────────────────── */
+.recur__row {
+  display: flex;
+  gap: 12px;
+}
+
+.recur__badge {
+  font-size: 12px;
+  color: var(--accent, #7c3aed);
+  background: rgba(124,58,237,0.10);
+  border: 1px solid rgba(124,58,237,0.22);
+  border-radius: 10px;
+  padding: 7px 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Edit scope prompt ───────────────────────────────────────── */
+.recur__scope-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text, rgba(255,255,255,0.80));
+  line-height: 1.5;
+}
+
+.recur__scope-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recur__scope-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 140ms, border-color 140ms;
+}
+
+.recur__scope-btn:hover {
+  background: rgba(124,58,237,0.12);
+  border-color: rgba(124,58,237,0.35);
+}
+
+.recur__scope-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .recur__row { flex-direction: column; }
+}

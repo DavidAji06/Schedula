@@ -59,17 +59,50 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
   }
 
   function handleSave(payload) {
+    const { _series, _editScope, ...base } = payload;
+
     if (editingId) {
-      setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...payload } : e)));
+      // Editing existing event
+      if (_editScope === "all" && base.recurringId) {
+        // Update every event in the series
+        setEvents((prev) => prev.map((e) =>
+          e.recurringId === base.recurringId
+            ? { ...e, title: base.title, category: base.category, location: base.location }
+            : e
+        ));
+      } else {
+        // Edit just this one
+        setEvents((prev) => prev.map((e) =>
+          e.id === editingId ? { ...e, ...base } : e
+        ));
+      }
+    } else if (_series) {
+      // New recurring series — add all occurrences
+      setEvents((prev) => [
+        ...prev,
+        ..._series.map((ev) => ({ id: crypto.randomUUID(), ...ev })),
+      ]);
     } else {
-      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...payload }]);
+      // Single new event
+      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...base }]);
     }
     closeModal();
   }
 
   function handleDelete() {
     if (!editingId) return;
-    setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    const ev = events.find((e) => e.id === editingId);
+    if (ev?.recurringId) {
+      // Ask: delete this or all
+      const all = window.confirm("Delete all events in this recurring series?\n\nOK = delete all   Cancel = delete only this one");
+      if (all) {
+        setEvents((prev) => prev.filter((e) => e.recurringId !== ev.recurringId));
+      } else {
+        setEvents((prev) => prev.filter((e) => e.id !== editingId));
+      }
+    } else {
+      setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    }
     closeModal();
   }
 
@@ -167,6 +200,8 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
         </div>
       </header>
 
+      <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
+
       <section className="week__card">
         <div className="grid grid--header">
           {DAYS.map((label, i) => {
@@ -212,6 +247,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
                           >
                             <div className="event__title">
                               {isConflict && <span className="event__conflict-icon" title="Time conflict">⚠️</span>}
+                              {ev.recurringId && <span className="event__recur-icon" title="Recurring">🔁</span>}
                               {ev.title}
                             </div>
                             <div className="event__meta">
@@ -241,8 +277,6 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
           })}
         </div>
       </section>
-
-      <TodoSidebar open={todoOpen} onClose={() => setTodoOpen(false)} />
     </div>
   );
 }
