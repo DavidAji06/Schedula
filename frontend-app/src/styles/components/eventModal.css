@@ -111,7 +111,7 @@
 @media (max-width: 520px){
   .form__row{ grid-template-columns: 1fr; }
 }
-/* ── Recurring fields ────────────────────────────────────────── */
+/* Recurring fields */
 .recur__row {
   display: flex;
   gap: 12px;
@@ -129,7 +129,7 @@
   gap: 6px;
 }
 
-/* ── Edit scope prompt ───────────────────────────────────────── */
+/* Edit scope prompt */
 .recur__scope-desc {
   margin: 0;
   font-size: 13px;

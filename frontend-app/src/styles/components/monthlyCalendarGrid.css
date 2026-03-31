@@ -316,3 +316,13 @@
   font-weight: 500;
   padding: 1px 4px;
 }
+
+.month__homeBtn {
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.month__homeBtn:hover {
+  color: var(--text);
+  background: var(--surface2);
+}

@@ -253,7 +253,7 @@
 :root[data-theme="light"] .todo-add__select,
 :root[data-theme="light"] .todo-add__date { background: #f7f8fc; color: rgba(15,18,30,0.90); }
 
-/* ── Custom priority picker ──────────────────────────────────── */
+/* Custom priority picker */
 /* Wrapper — same grid cell as the old <select> */
 .todo-priority-picker {
   position: relative;

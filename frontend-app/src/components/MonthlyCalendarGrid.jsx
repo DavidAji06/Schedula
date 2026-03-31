@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import "../styles/components/monthlyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
+import { useNavigate } from "react-router-dom";
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -35,6 +36,7 @@ function isSameDay(a, b) {
 }
 
 export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
+  const navigate = useNavigate();
   const [monthCursor, setMonthCursor] = useState(() => new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -148,10 +150,9 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
         </div>
 
         <div className="month__actions">
-          {/* <button className="month__iconBtn" type="button" onClick={onToggleTheme}>
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button> */}
-
+          <button className="month__iconBtn" type="button" onClick={() => navigate("/")}>
+            ← Home
+          </button>
           <button className="month__iconBtn" type="button" onClick={onToggleView}>
             📆 Week
           </button>

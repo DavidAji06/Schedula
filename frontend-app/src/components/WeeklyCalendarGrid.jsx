@@ -281,9 +281,9 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
         </div>
 
         <div className="week__actions">
-          {/* <button className="week__iconBtn" type="button" onClick={onToggleTheme}>
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button> */}
+          <button className="month__iconBtn" type="button" onClick={() => navigate("/")}>
+            ← Home
+          </button>
 
           <button className="week__iconBtn" type="button" onClick={onToggleView}>
             {view === "week" ? "🗓️ Month" : "📆 Week"}

@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
-/* ── Design tokens ───────────────────────────────────────────── */
+/* Design tokens */
 :root {
   --bg:        #080c12;
   --surface:   rgba(255,255,255,0.045);
@@ -34,7 +34,7 @@
   --line2:    rgba(0,0,0,0.04);
 }
 
-/* ── Page ────────────────────────────────────────────────────── */
+/* Page */
 .week {
   height: 100vh;
   display: flex;
@@ -70,7 +70,7 @@
     radial-gradient(ellipse 700px 500px at 100% 15%, rgba(59,130,246,0.07), transparent 60%);
 }
 
-/* ── Topbar ──────────────────────────────────────────────────── */
+/* Topbar */
 .week__topbar {
   display: flex;
   align-items: center;
@@ -138,8 +138,8 @@
 .week__btn:hover  { opacity: 0.87; }
 .week__btn:active { transform: scale(0.97); }
 
-/* ── Card ────────────────────────────────────────────────────── */
-/* ── Calendar card ───────────────────────────────────────────── */
+/* Card  */
+/* Calendar card */
 .week__card {
   flex: 1;
   min-height: 0;
@@ -157,7 +157,7 @@
   box-shadow: 0 24px 60px rgba(0,0,0,0.09), 0 1px 0 rgba(255,255,255,1) inset;
 }
 
-/* ── Time-grid header ────────────────────────────────────────── */
+/* Time-grid header */
 .tg__header {
   display: grid;
   grid-template-columns: 52px repeat(7, minmax(0,1fr));
@@ -194,7 +194,7 @@
 }
 .tg__date--today { background: var(--accent); color: #fff; }
 
-/* ── Scrollable area ─────────────────────────────────────────── */
+/* Scrollable area */
 .tg__scroll {
   flex: 1;
   min-height: 0;
@@ -206,7 +206,7 @@
 .tg__scroll::-webkit-scrollbar { width: 5px; }
 .tg__scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
-/* ── Body grid ───────────────────────────────────────────────── */
+/* Body grid */
 .tg__body {
   display: grid;
   grid-template-columns: 52px repeat(7, minmax(0,1fr));
@@ -214,7 +214,7 @@
   position: relative;
 }
 
-/* ── Hour gutter ─────────────────────────────────────────────── */
+/* Hour gutter */
 .tg__gutter { border-right: 1px solid var(--line); position: relative; }
 .tg__gutter-cell {
   height: 64px;
@@ -232,7 +232,7 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Day columns ─────────────────────────────────────────────── */
+/* Day columns */
 .tg__col {
   position: relative;
   border-right: 1px solid var(--line);
@@ -271,7 +271,7 @@
   opacity: 0.5;
 }
 
-/* ── Now indicator ───────────────────────────────────────────── */
+/* Now indicator */
 .tg__now {
   position: absolute;
   left: 0;
@@ -297,7 +297,7 @@
   opacity: 0.8;
 }
 
-/* ── Positioned events ───────────────────────────────────────── */
+/* Positioned events */
 .tg__event {
   position: absolute;
   border-radius: 8px;
@@ -383,7 +383,7 @@
 .event__bell:hover     { opacity: 0.65; transform: scale(1.2); border-color: transparent; }
 .event__bell--on       { opacity: 1; filter: drop-shadow(0 0 4px rgba(167,139,250,0.65)); }
 
-/* ── Conflict ────────────────────────────────────────────────── */
+/* Conflict */
 .event--conflict {
   border-color: rgba(239,68,68,0.50) !important;
   background: rgba(239,68,68,0.09) !important;
@@ -398,7 +398,7 @@
 
 .event__conflict-icon { margin-right: 4px; font-size: 11px; }
 
-/* ── Modal ───────────────────────────────────────────────────── */
+/* Modal  */
 .modal {
   position: fixed;
   inset: 0;
@@ -549,4 +549,14 @@
   .week__card  { overflow-x: auto; }
   .tg__header,
   .tg__body    { min-width: 700px; }
+}
+
+.weekly__homeBtn {
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.weekly__homeBtn:hover {
+  color: var(--text);
+  background: var(--surface2);
 }
