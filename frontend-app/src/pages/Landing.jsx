@@ -99,22 +99,12 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      {/* <section className="ln__cta">
-        <h2 className="ln__cta-headline">Ready to own your week?</h2>
-        <p className="ln__cta-sub">Free for students. No credit card required.</p>
-        <button className="ln__btn-primary ln__btn-primary--lg" onClick={goToApp}>
-          Create free account
-        </button>
-      </section> */}
-
-      {/* ── Footer ── */}
+      {/* Footer  */}
       <footer className="ln__footer">
         <span className="ln__logo">Schedul<em>a</em></span>
         <div className="ln__footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">GitHub</a>
+          <a href="#https://www.linkedin.com/in/david-ajidagba/">Linkedin</a>
+          <a href="#https://github.com/DavidAji06">GitHub</a>
         </div>
         <span className="ln__footer-copy">© 2026 Schedula</span>
       </footer>

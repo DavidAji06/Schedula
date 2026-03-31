@@ -8,19 +8,20 @@ import MonthlyCalendarGrid from "./components/MonthlyCalendarGrid";
 export default function App() {
   const [view, setView] = useState("week");
   const [events, setEvents] = useState([]);
+  const [username, setUsername] = useState(""); //replace with value returned in JWT/session when done backend
 
 
   function toggleView() {
     setView((v) => (v === "week" ? "month" : "week"));
   }
 
-  const calendarProps = { view, onToggleView: toggleView, events, setEvents };
+  const calendarProps = { view, onToggleView: toggleView, events, setEvents, username};
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth" element={<Auth onLogin={setUsername} />} />
         <Route
           path="/app"
           element={

@@ -35,7 +35,7 @@ function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
+export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents, username }) {
   const navigate = useNavigate();
   const [monthCursor, setMonthCursor] = useState(() => new Date());
   const [modalOpen, setModalOpen] = useState(false);
@@ -145,6 +145,7 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
 
       <header className="month__topbar">
         <div>
+          {username && <p className="month__welcome">Welcome, {username}</p>}
           <h1 className="month__title">Monthly Timetable</h1>
           <p className="month__subtitle">{monthLabel}</p>
         </div>

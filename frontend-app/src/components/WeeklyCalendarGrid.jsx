@@ -71,7 +71,7 @@ function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents }) {
+export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents, username }) {
   const [weekStart, setWeekStart] = useState(() => {
     const today = new Date();
     const day = today.getDay();
@@ -271,6 +271,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
       <header className="week__topbar">
         <div className="week__topbar__left">
           <div>
+            {username && <p className="week__welcome">Welcome {username}</p>}
             <h1 className="week__title">Weekly Timetable</h1>
             <p className="week__subtitle">
               {weekDates[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} –{" "}

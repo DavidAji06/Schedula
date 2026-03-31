@@ -138,7 +138,7 @@
 .week__btn:hover  { opacity: 0.87; }
 .week__btn:active { transform: scale(0.97); }
 
-/* Card  */
+/* Card */
 /* Calendar card */
 .week__card {
   flex: 1;
@@ -398,7 +398,7 @@
 
 .event__conflict-icon { margin-right: 4px; font-size: 11px; }
 
-/* Modal  */
+/* Modal */
 .modal {
   position: fixed;
   inset: 0;
@@ -551,12 +551,18 @@
   .tg__body    { min-width: 700px; }
 }
 
-.weekly__homeBtn {
-  color: var(--text3);
+.week__welcome {
   font-size: 12px;
+  color: var(--accent2);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin: 0 0 3px;
 }
 
-.weekly__homeBtn:hover {
-  color: var(--text);
-  background: var(--surface2);
+.month__welcome {
+  font-size: 12px;
+  color: var(--accent2);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin: 0 0 3px;
 }
