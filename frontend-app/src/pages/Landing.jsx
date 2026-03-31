@@ -100,13 +100,13 @@ export default function Landing() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="ln__cta">
+      {/* <section className="ln__cta">
         <h2 className="ln__cta-headline">Ready to own your week?</h2>
         <p className="ln__cta-sub">Free for students. No credit card required.</p>
         <button className="ln__btn-primary ln__btn-primary--lg" onClick={goToApp}>
           Create free account
         </button>
-      </section>
+      </section> */}
 
       {/* ── Footer ── */}
       <footer className="ln__footer">

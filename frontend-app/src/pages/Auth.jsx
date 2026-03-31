@@ -128,7 +128,7 @@ export default function Auth() {
                 name="username"
                 value={form.username}
                 onChange={handleChange}
-                placeholder="e.g. david_aj"
+                placeholder=" "
                 autoComplete="username"
                 autoFocus
               />
