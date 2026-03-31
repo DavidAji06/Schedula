@@ -122,21 +122,25 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
   const monthLabel = monthCursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const today = new Date();
 
+  const initialStart = useMemo(() => {
+    const d = new Date(selectedDate);
+    d.setHours(9, 0, 0, 0);
+    return d;
+  }, [selectedDate]);
+
+  const initialEnd = useMemo(() => {
+    const d = new Date(selectedDate);
+    d.setHours(10, 0, 0, 0);
+    return d;
+  }, [selectedDate]);
+
   return (
     <div className="month">
       <EventModal
         open={modalOpen}
         mode={editingId ? "edit" : "add"}
-        initialStart={(() => {
-          const d = new Date(selectedDate);
-          d.setHours(9, 0, 0, 0);
-          return d;
-        })()}
-        initialEnd={(() => {
-          const d = new Date(selectedDate);
-          d.setHours(10, 0, 0, 0);
-          return d;
-        })()}
+        initialStart={initialStart}
+        initialEnd={initialEnd}
         eventToEdit={eventToEdit}
         onClose={closeModal}
         onSave={handleSave}
