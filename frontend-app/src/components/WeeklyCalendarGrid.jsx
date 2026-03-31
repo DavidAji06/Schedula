@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/components/weeklyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
@@ -87,6 +88,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
   const [now, setNow] = useState(() => new Date());
   const [todoOpen, setTodoOpen] = useState(false);
   const scrollRef = React.useRef(null);
+  const navigate = useNavigate();
 
   // Scroll to current time on mount
   useEffect(() => {
@@ -241,21 +243,25 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
+  const initialStart = useMemo(() => {
+    const d = new Date(selectedDate.date || selectedDate);
+    d.setHours(selectedDate.hour ?? 9, 0, 0, 0);
+    return d;
+  }, [selectedDate]);
+
+  const initialEnd = useMemo(() => {
+    const d = new Date(selectedDate.date || selectedDate);
+    d.setHours((selectedDate.hour ?? 9) + 1, 0, 0, 0);
+    return d;
+  }, [selectedDate]);
+
   return (
     <div className="week">
       <EventModal
         open={modalOpen}
         mode={editingId ? "edit" : "add"}
-        initialStart={(() => {
-          const d = new Date(selectedDate.date || selectedDate);
-          d.setHours(selectedDate.hour ?? 9, 0, 0, 0);
-          return d;
-        })()}
-        initialEnd={(() => {
-          const d = new Date(selectedDate.date || selectedDate);
-          d.setHours((selectedDate.hour ?? 9) + 1, 0, 0, 0);
-          return d;
-        })()}
+        initialStart={initialStart}
+        initialEnd={initialEnd}
         eventToEdit={eventToEdit}
         onClose={closeModal}
         onSave={handleSave}
@@ -281,7 +287,7 @@ export default function WeeklyCalendarGrid({ theme, onToggleTheme, view, onToggl
         </div>
 
         <div className="week__actions">
-          <button className="month__iconBtn" type="button" onClick={() => navigate("/")}>
+          <button className="week__iconBtn" type="button" onClick={() => navigate("/")}>
             ← Home
           </button>
 

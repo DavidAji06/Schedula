@@ -32,7 +32,7 @@ export default function Landing() {
             Schedule lectures, track deadlines, manage your week — all in one clean, focused place.
           </p>
           <div className="ln__hero-actions">
-            <button className="ln__btn-primary ln__btn-primary--lg" onClick={goToApp}> {/*In future change to sign up */}
+            <button className="ln__btn-primary ln__btn-primary--lg" onClick={() => navigate("/auth")}>
               Sign in to save your timetable
             </button>
             <a href="#features" className="ln__btn-ghost">See features →</a>

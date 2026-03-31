@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import Landing from "./pages/Landing";
+import Auth from "./pages/Auth";
 import WeeklyCalendarGrid from "./components/WeeklyCalendarGrid";
 import MonthlyCalendarGrid from "./components/MonthlyCalendarGrid";
 
@@ -19,6 +20,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/auth" element={<Auth />} />
         <Route
           path="/app"
           element={
