@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "../styles/components/todoSidebar.css";
-import { useNavigate } from "react-router-dom";
+import { createTask, updateTask, deleteTask as deleteTaskAPI, fetchTasks } from "../services/api";
 
 const PRIORITIES = ["high", "medium", "low"];
 
@@ -18,14 +18,19 @@ function formatDue(dateStr) {
 }
 
 export default function TodoSidebar({ open, onClose }) {
-  const [tasks, setTasks]     = useState([]);
-  const [filter, setFilter]   = useState("all"); // all | active | done
-  const [title, setTitle]     = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("medium");
   const [dueDate, setDueDate] = useState("");
   const [priorityOpen, setPriorityOpen] = useState(false);
   const inputRef = useRef(null);
   const priorityRef = useRef(null);
+
+  // Load tasks from API on mount
+  useEffect(() => {
+    fetchTasks().then(setTasks).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (!priorityOpen) return;
@@ -51,35 +56,53 @@ export default function TodoSidebar({ open, onClose }) {
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  function addTask() {
+  async function addTask() {
     const trimmed = title.trim();
     if (!trimmed) return;
-    setTasks((prev) => [
-      {
-        id: crypto.randomUUID(),
+    try {
+      const created = await createTask({
         title: trimmed,
         priority,
         due: dueDate || null,
         done: false,
-        createdAt: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-    setTitle("");
-    setDueDate("");
-    setPriority("medium");
+      });
+      setTasks((prev) => [created, ...prev]);
+      setTitle("");
+      setDueDate("");
+      setPriority("medium");
+    } catch (err) {
+      console.error("Failed to create task:", err);
+    }
   }
 
-  function toggleDone(id) {
-    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t));
+  async function toggleDone(id) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    try {
+      const updated = await updateTask(id, { done: !task.done });
+      setTasks((prev) => prev.map((t) => t.id === id ? { ...t, ...updated } : t));
+    } catch (err) {
+      console.error("Failed to update task:", err);
+    }
   }
 
-  function deleteTask(id) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+  async function deleteTask(id) {
+    try {
+      await deleteTaskAPI(id);
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
   }
 
-  function clearCompleted() {
-    setTasks((prev) => prev.filter((t) => !t.done));
+  async function clearCompleted() {
+    const completed = tasks.filter((t) => t.done);
+    try {
+      await Promise.all(completed.map((t) => deleteTaskAPI(t.id)));
+      setTasks((prev) => prev.filter((t) => !t.done));
+    } catch (err) {
+      console.error("Failed to clear completed tasks:", err);
+    }
   }
 
   function handleKeyDown(e) {

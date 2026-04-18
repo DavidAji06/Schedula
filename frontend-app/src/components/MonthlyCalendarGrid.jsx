@@ -4,6 +4,7 @@ import "../styles/components/monthlyCalendarGrid.css";
 import EventModal from "./EventModal";
 import TodoSidebar from "./Todosidebar";
 import { useNavigate } from "react-router-dom";
+import { createEvent, updateEvent, deleteEvent, deleteSeries } from "../services/api";
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -63,44 +64,57 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
     setEditingId(null);
   }
 
-  function handleSave(payload) {
+  async function handleSave(payload) {
     const { _series, _editScope, ...base } = payload;
 
-    if (editingId) {
-      if (_editScope === "all" && base.recurringId) {
-        setEvents((prev) => prev.map((e) =>
-          e.recurringId === base.recurringId
-            ? { ...e, title: base.title, category: base.category, location: base.location }
-            : e
-        ));
+    try {
+      if (editingId) {
+        if (_editScope === "all" && base.recurringId) {
+          const updatedEvents = await Promise.all(
+            events
+              .filter((e) => e.recurringId === base.recurringId)
+              .map((e) => updateEvent(e.id, { title: base.title, category: base.category, location: base.location }))
+          );
+          setEvents((prev) => prev.map((e) => {
+            const updated = updatedEvents.find((u) => u.id === e.id);
+            return updated ? { ...e, ...updated } : e;
+          }));
+        } else {
+          const updated = await updateEvent(editingId, base);
+          setEvents((prev) => prev.map((e) => e.id === editingId ? { ...e, ...updated } : e));
+        }
+      } else if (_series) {
+        const created = await Promise.all(_series.map((ev) => createEvent(ev)));
+        setEvents((prev) => [...prev, ...created]);
       } else {
-        setEvents((prev) => prev.map((e) =>
-          e.id === editingId ? { ...e, ...base } : e
-        ));
+        const created = await createEvent(base);
+        setEvents((prev) => [...prev, created]);
       }
-    } else if (_series) {
-      setEvents((prev) => [
-        ...prev,
-        ..._series.map((ev) => ({ id: crypto.randomUUID(), ...ev })),
-      ]);
-    } else {
-      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...base }]);
+    } catch (err) {
+      console.error("Failed to save event:", err);
     }
     closeModal();
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!editingId) return;
     const ev = events.find((e) => e.id === editingId);
-    if (ev?.recurringId) {
-      const all = window.confirm("Delete all events in this recurring series?\n\nOK = delete all   Cancel = delete only this one");
-      if (all) {
-        setEvents((prev) => prev.filter((e) => e.recurringId !== ev.recurringId));
+    try {
+      if (ev?.recurringId) {
+        const all = window.confirm("Delete all events in this recurring series?\n\nOK = delete all   Cancel = delete only this one");
+        if (all) {
+          await deleteSeries(ev.recurringId);
+          setEvents((prev) => prev.filter((e) => e.recurringId !== ev.recurringId));
+        } else {
+          await deleteEvent(editingId);
+          setEvents((prev) => prev.filter((e) => e.id !== editingId));
+        }
       } else {
+        await deleteEvent(editingId);
         setEvents((prev) => prev.filter((e) => e.id !== editingId));
       }
-    } else {
-      setEvents((prev) => prev.filter((e) => e.id !== editingId));
+    } catch (err) {
+      console.error("Failed to delete event:", err);
     }
     closeModal();
   }

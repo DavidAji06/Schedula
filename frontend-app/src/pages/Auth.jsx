@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/pages/auth.css";
+import { registerUser, loginUser } from "../services/api";
 
 export default function Auth({ onLogin }) {
   const navigate = useNavigate();
@@ -37,13 +38,30 @@ export default function Auth({ onLogin }) {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      if (mode === "forgot") { setMode("signin"); return; }
-      const name = form.username.trim() || form.email.split("@")[0];
-      onLogin(name);
-      navigate("/app");
-    }, 800);
+
+    const run = async () => {
+      try {
+        if (mode === "forgot") {
+          setMode("signin");
+          setLoading(false);
+          return;
+        }
+        if (mode === "signup") {
+          await registerUser(form.username, form.email, form.password);
+        }
+        const data = await loginUser(form.email, form.password);
+        localStorage.setItem("token", data.access_token);
+        const name = form.username.trim() || form.email.split("@")[0];
+        onLogin(name);
+        navigate("/app");
+      } catch (err) {
+        setErrors({ form: err.message });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
   }
 
   function switchMode(next) {
@@ -131,6 +149,12 @@ export default function Auth({ onLogin }) {
               <label className="auth__label">Confirm password</label>
               <input className="auth__input" type={showPassword ? "text" : "password"} name="confirmPassword" value={form.confirmPassword} onChange={handleChange} placeholder="Repeat your password" autoComplete="new-password" />
               {errors.confirmPassword && <span className="auth__error">{errors.confirmPassword}</span>}
+            </div>
+          )}
+
+          {errors.form && (
+            <div className="auth__field auth__field--error">
+              <span className="auth__error">{errors.form}</span>
             </div>
           )}
 
