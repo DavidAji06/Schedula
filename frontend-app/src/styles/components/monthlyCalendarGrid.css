@@ -1,0 +1,328 @@
+/* Tokens are defined in WeeklyCalendarGrid.css (loaded first via :root).
+   This file only needs to define .month-* specific rules. */
+
+/*  Page  */
+.month {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 26px 18px;
+  font-family: var(--font, 'DM Sans', ui-sans-serif, sans-serif);
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 1000px 650px at 0% 0%,   rgba(124,58,237,0.14), transparent 65%),
+    radial-gradient(ellipse 700px 500px  at 100% 15%, rgba(59,130,246,0.09), transparent 60%),
+    radial-gradient(ellipse 500px 400px  at 55% 95%,  rgba(16,185,129,0.06), transparent 55%);
+  position: relative;
+  overflow: hidden;
+}
+
+.month::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 200px;
+  pointer-events: none;
+  z-index: 0;
+}
+.month > * { position: relative; z-index: 1; }
+
+:root[data-theme="light"] .month {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 900px 600px at 0%   0%,  rgba(139,92,246,0.09), transparent 65%),
+    radial-gradient(ellipse 700px 500px at 100% 15%, rgba(59,130,246,0.07), transparent 60%);
+}
+
+/* Topbar  */
+.month__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  flex-shrink: 0;
+}
+
+.month__title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.month__subtitle {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 400;
+}
+
+.month__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 4px;
+  backdrop-filter: blur(16px);
+}
+
+.month__iconBtn {
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  padding: 7px 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font, 'DM Sans', ui-sans-serif, sans-serif);
+  font-weight: 500;
+  transition: background 140ms, color 140ms;
+  white-space: nowrap;
+}
+.month__iconBtn:hover { background: var(--surface2); color: var(--text); }
+
+.month__btn {
+  border: none;
+  background: var(--accent, #7c3aed);
+  color: #fff;
+  padding: 7px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font, 'DM Sans', ui-sans-serif, sans-serif);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: opacity 140ms, transform 100ms;
+  white-space: nowrap;
+}
+.month__btn:hover  { opacity: 0.87; }
+.month__btn:active { transform: scale(0.97); }
+
+/* Card  */
+.month__card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--surface), var(--surface2));
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.38),
+    0 1px 0 rgba(255,255,255,0.055) inset;
+  backdrop-filter: blur(20px);
+}
+
+:root[data-theme="light"] .month__card {
+  background: linear-gradient(160deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72));
+  box-shadow: 0 24px 60px rgba(0,0,0,0.09), 0 1px 0 rgba(255,255,255,1) inset;
+}
+
+/*  Navbar  */
+.month__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface3);
+  flex-shrink: 0;
+}
+
+.month__navLabel {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  min-width: 145px;
+  text-align: center;
+  letter-spacing: -0.2px;
+}
+
+/*  Grid  */
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0,1fr));
+}
+
+.monthGrid--head { border-bottom: 1px solid var(--line); flex-shrink: 0; }
+
+.monthCell { border-right: 1px solid var(--line); }
+.monthCell:nth-child(7n) { border-right: none; }
+
+.monthCell--head {
+  padding: 9px 12px;
+  background: var(--surface3);
+  color: var(--text3);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.monthGrid--body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.monthGrid--body::-webkit-scrollbar { width: 4px; }
+.monthGrid--body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* force rows to fill available space evenly */
+.monthGrid--body .monthGrid { height: 100%; }
+
+.monthGrid--body .monthCell {
+  padding: 9px 9px 10px;
+  background: transparent;
+  border-bottom: 1px solid var(--line2);
+  transition: background 140ms;
+  min-height: 100px;
+}
+
+.monthGrid--body .monthCell:hover { background: var(--surface3); }
+
+.monthCell--dim { opacity: 0.38; }
+
+.monthCell--today { background: rgba(124,58,237,0.06) !important; }
+
+/* date number */
+.monthCell__num {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 7px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 200ms;
+}
+
+.monthCell--today .monthCell__num {
+  background: var(--accent, #7c3aed);
+  color: #fff;
+}
+
+.monthCell__events {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+}
+
+/*  Chips  */
+.monthChip {
+  border-radius: 8px;
+  padding: 4px 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  transition: filter 130ms, transform 110ms;
+  border: 1px solid transparent;
+}
+
+.monthChip--lecture    { background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.26); border-left: 3px solid var(--c-lecture,    #8b5cf6); }
+.monthChip--assignment { background: rgba(245,158,11,0.14);  border-color: rgba(245,158,11,0.24);  border-left: 3px solid var(--c-assignment, #f59e0b); }
+.monthChip--society    { background: rgba(16,185,129,0.13);  border-color: rgba(16,185,129,0.23);  border-left: 3px solid var(--c-society,    #10b981); }
+.monthChip--personal   { background: rgba(59,130,246,0.13);  border-color: rgba(59,130,246,0.23);  border-left: 3px solid var(--c-personal,   #3b82f6); }
+
+:root[data-theme="light"] .monthChip--lecture    { background: rgba(139,92,246,0.09); border-color: rgba(139,92,246,0.18); }
+:root[data-theme="light"] .monthChip--assignment { background: rgba(245,158,11,0.09); border-color: rgba(245,158,11,0.18); }
+:root[data-theme="light"] .monthChip--society    { background: rgba(16,185,129,0.09); border-color: rgba(16,185,129,0.18); }
+:root[data-theme="light"] .monthChip--personal   { background: rgba(59,130,246,0.09); border-color: rgba(59,130,246,0.18); }
+
+.monthChip:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.monthChip:focus { outline: none; }
+.monthChip:focus-visible { box-shadow: 0 0 0 3px rgba(124,58,237,0.35); }
+
+.monthChip__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.monthChip__time {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.monthChip__right {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.monthChip__countdown {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent, #7c3aed);
+  background: var(--accent-lo, rgba(124,58,237,0.14));
+  border: 1px solid rgba(124,58,237,0.20);
+  border-radius: 20px;
+  padding: 1px 5px;
+  letter-spacing: 0.03em;
+}
+:root[data-theme="light"] .monthChip__countdown { color: #5b21b6; }
+
+.monthChip__warn { font-size: 9.5px; }
+
+.monthChip__bell {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 10px;
+  opacity: 0.28;
+  transition: opacity 120ms, transform 120ms;
+  line-height: 1;
+  border-radius: 4px;
+}
+.monthChip__bell:hover  { opacity: 0.65; transform: scale(1.2); border-color: transparent; }
+.monthChip__bell--on    { opacity: 1; filter: drop-shadow(0 0 3px rgba(167,139,250,0.7)); }
+
+/*  Conflict  */
+.monthChip--conflict {
+  border-color: rgba(239,68,68,0.50) !important;
+  background: rgba(239,68,68,0.10) !important;
+  border-left-color: #ef4444 !important;
+  animation: chip-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes chip-pulse {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 0 2px rgba(239,68,68,0.16); }
+}
+
+/*  More indicator  */
+.monthMore {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  padding: 1px 4px;
+}
+
+.month__homeBtn {
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.month__homeBtn:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
