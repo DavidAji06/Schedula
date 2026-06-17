@@ -113,7 +113,6 @@ export default function Auth({ onLogin }) {
         )}
 
         <form className="auth__form" onSubmit={handleSubmit} noValidate>
-
           {isSignUp && (
             <div className={`auth__field${errors.username ? " auth__field--error" : ""}`}>
               <label className="auth__label">Username</label>
@@ -163,7 +162,6 @@ export default function Auth({ onLogin }) {
               <>{isSignIn && "Sign in"}{isSignUp && "Create account"}{isForgot && "Send reset link"}</>
             )}
           </button>
-
         </form>
 
         <div className="auth__footer">

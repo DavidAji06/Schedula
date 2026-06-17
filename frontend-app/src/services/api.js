@@ -115,3 +115,14 @@ export async function deleteTask(id) {
   });
   if (!res.ok) throw new Error("Failed to delete task");
 }
+
+// AI
+export async function parseEventWithAI(text) {
+  const res = await fetch(`${BASE_URL}/ai/parse-event`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error("Failed to parse event");
+  return res.json();
+}

@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "../styles/components/eventModal.css";
+import { parseEventWithAI } from "../services/api";
 
-/**
- * Reusable Add/Edit Event modal.
- *
- * Props:
- * - open: boolean
- * - mode: "add" | "edit"
- * - initialStart: Date (used only when opening in "add")
- * - initialEnd: Date (used only when opening in "add")
- * - eventToEdit: existing event object (used only when mode="edit")
- * - onClose: () => void
- * - onSave: (eventPayload) => void
- * - onDelete: () => void   (only used in edit mode)
- */
 function toLocalInputValue(d) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+const EXAMPLES = [
+  "Gym every Tuesday and Thursday at 6pm for 1 hour",
+  "COMP16412 lecture Monday 10am–12pm weekly",
+  "Dentist appointment next Friday at 2:30pm",
+];
 
 export default function EventModal({
   open,
@@ -39,14 +33,22 @@ export default function EventModal({
     repeatUntil: "",
   });
   const [error, setError] = useState("");
-  const [editScope, setEditScope] = useState(null); // null | "this" | "all"
+  const [editScope, setEditScope] = useState(null);
 
-  // Open modal -> populate form with add/edit
+  // AI parse state
+  const [aiText, setAiText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiSuccess, setAiSuccess] = useState(false);
+  const aiInputRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
-
     setError("");
     setEditScope(null);
+    setAiText("");
+    setAiError("");
+    setAiSuccess(false);
 
     if (mode === "edit" && eventToEdit) {
       setForm({
@@ -61,10 +63,8 @@ export default function EventModal({
       return;
     }
 
-    // mode === "add"
     const s = initialStart ?? new Date();
     const e = initialEnd ?? new Date(s.getTime() + 60 * 60 * 1000);
-
     setForm({
       title: "",
       category: "lecture",
@@ -76,6 +76,37 @@ export default function EventModal({
     });
   }, [open, mode, eventToEdit, initialStart, initialEnd]);
 
+  async function handleAIParse() {
+    if (!aiText.trim()) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiSuccess(false);
+
+    try {
+      const parsed = await parseEventWithAI(aiText.trim());
+
+      setForm({
+        title: parsed.title ?? "",
+        category: parsed.category ?? "personal",
+        start: parsed.start ? toLocalInputValue(new Date(parsed.start)) : form.start,
+        end: parsed.end ? toLocalInputValue(new Date(parsed.end)) : form.end,
+        location: parsed.location ?? "",
+        repeat: parsed.repeat ?? "none",
+        repeatUntil: parsed.repeat_until ?? "",
+      });
+      setAiSuccess(true);
+      setTimeout(() => setAiSuccess(false), 2500);
+    } catch {
+      setAiError("Couldn't parse that — try rephrasing.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function handleAIKeyDown(e) {
+    if (e.key === "Enter") handleAIParse();
+  }
+
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -86,7 +117,7 @@ export default function EventModal({
     setError("");
 
     const startDate = new Date(form.start);
-    const endDate   = new Date(form.end);
+    const endDate = new Date(form.end);
 
     if (!form.title.trim()) return setError("Title is required.");
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()))
@@ -94,85 +125,62 @@ export default function EventModal({
     if (endDate <= startDate) return setError("End time must be after start time.");
 
     const durationMs = endDate - startDate;
-    const recurringId = (mode === "edit" && eventToEdit?.recurringId)
-      ? eventToEdit.recurringId
-      : crypto.randomUUID();
+    const recurringId =
+      mode === "edit" && eventToEdit?.recurringId
+        ? eventToEdit.recurringId
+        : crypto.randomUUID();
 
     const base = {
-      title:       form.title.trim(),
-      category:    form.category,
-      location:    form.location.trim(),
-      repeat:      form.repeat,
+      title: form.title.trim(),
+      category: form.category,
+      location: form.location.trim(),
+      repeat: form.repeat,
       repeatUntil: form.repeat !== "none" ? form.repeatUntil : "",
     };
 
-    // Generate all occurrences for a new series
     function buildSeries(anchorStart) {
       if (form.repeat === "none") {
-        return [{
-          ...base,
-          start: anchorStart.toISOString(),
-          end:   new Date(anchorStart.getTime() + durationMs).toISOString(),
-          recurringId: null,
-        }];
+        return [{ ...base, start: anchorStart.toISOString(), end: new Date(anchorStart.getTime() + durationMs).toISOString(), recurringId: null }];
       }
-
       const until = form.repeatUntil
         ? new Date(form.repeatUntil)
         : (() => { const d = new Date(anchorStart); d.setMonth(d.getMonth() + 3); return d; })();
 
       const events = [];
       let cursor = new Date(anchorStart);
-
       while (cursor <= until) {
-        events.push({
-          ...base,
-          start: cursor.toISOString(),
-          end:   new Date(cursor.getTime() + durationMs).toISOString(),
-          recurringId,
-        });
-
+        events.push({ ...base, start: cursor.toISOString(), end: new Date(cursor.getTime() + durationMs).toISOString(), recurringId });
         const next = new Date(cursor);
-        if (form.repeat === "daily")        next.setDate(next.getDate() + 1);
-        else if (form.repeat === "weekly")  next.setDate(next.getDate() + 7);
+        if (form.repeat === "daily") next.setDate(next.getDate() + 1);
+        else if (form.repeat === "weekly") next.setDate(next.getDate() + 7);
         else if (form.repeat === "monthly") next.setMonth(next.getMonth() + 1);
         cursor = next;
       }
-
       return events;
     }
 
     const isRecurringEdit = mode === "edit" && eventToEdit?.recurringId;
-
-    // Editing a recurring event — ask scope first
-    if (isRecurringEdit && editScope === null) {
-      setEditScope("ask");
-      return;
-    }
+    if (isRecurringEdit && editScope === null) { setEditScope("ask"); return; }
 
     onSave({
       ...base,
-      start:       startDate.toISOString(),
-      end:         endDate.toISOString(),
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
       recurringId: form.repeat !== "none" ? recurringId : null,
-      _series:     form.repeat !== "none" && mode === "add" ? buildSeries(startDate) : null,
-      _editScope:  editScope,
+      _series: form.repeat !== "none" && mode === "add" ? buildSeries(startDate) : null,
+      _editScope: editScope,
     });
   }
 
-  // Close with escape
   useEffect(() => {
     if (!open) return;
-    function onKeyDown(e) {
-      if (e.key === "Escape") onClose();
-    }
+    function onKeyDown(e) { if (e.key === "Escape") onClose(); }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
 
-  // Scope picker shown when editing a recurring event
   if (editScope === "ask") {
     return (
       <div className="modal" role="dialog" aria-modal="true" onMouseDown={onClose}>
@@ -210,6 +218,46 @@ export default function EventModal({
           <button className="modal__close" type="button" onClick={onClose}>✕</button>
         </div>
 
+        {/* ── AI Parse Bar (add mode only) ── */}
+        {mode === "add" && (
+          <div className="ai-bar">
+            <div className="ai-bar__label">
+              <span className="ai-bar__badge">✦ AI</span>
+              <span className="ai-bar__hint">Describe your event in plain English</span>
+            </div>
+            <div className="ai-bar__row">
+              <input
+                ref={aiInputRef}
+                className="ai-bar__input"
+                type="text"
+                value={aiText}
+                onChange={(e) => { setAiText(e.target.value); setAiError(""); }}
+                onKeyDown={handleAIKeyDown}
+                placeholder={EXAMPLES[Math.floor(Date.now() / 10000) % EXAMPLES.length]}
+                disabled={aiLoading}
+              />
+              <button
+                className={`ai-bar__btn${aiLoading ? " ai-bar__btn--loading" : ""}${aiSuccess ? " ai-bar__btn--success" : ""}`}
+                type="button"
+                onClick={handleAIParse}
+                disabled={aiLoading || !aiText.trim()}
+                aria-label="Parse with AI"
+              >
+                {aiLoading ? (
+                  <span className="ai-bar__spinner" />
+                ) : aiSuccess ? (
+                  "✓"
+                ) : (
+                  "→"
+                )}
+              </button>
+            </div>
+            {aiError && <p className="ai-bar__error">{aiError}</p>}
+            {aiSuccess && <p className="ai-bar__success">Fields filled — check and save ↓</p>}
+          </div>
+        )}
+
+        {/* ── Manual form ── */}
         <form className="form" onSubmit={handleSubmit}>
           <label className="field">
             <span className="field__label">Title</span>
@@ -254,7 +302,6 @@ export default function EventModal({
             />
           </label>
 
-          {/* ── Recurring ── */}
           <div className="recur__row">
             <label className="field" style={{ flex: 1 }}>
               <span className="field__label">Repeat</span>
@@ -265,7 +312,6 @@ export default function EventModal({
                 <option value="monthly">Monthly</option>
               </select>
             </label>
-
             {form.repeat !== "none" && (
               <label className="field" style={{ flex: 1 }}>
                 <span className="field__label">Repeat until</span>
@@ -282,7 +328,9 @@ export default function EventModal({
 
           {form.repeat !== "none" && (
             <div className="recur__badge">
-              🔁 Repeats {form.repeat}{form.repeatUntil ? ` until ${new Date(form.repeatUntil).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : " (3 months)"}
+              🔁 Repeats {form.repeat}{form.repeatUntil
+                ? ` until ${new Date(form.repeatUntil).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+                : " (3 months)"}
             </div>
           )}
 
@@ -290,9 +338,7 @@ export default function EventModal({
 
           <div className="form__actions">
             {mode === "edit" && (
-              <button className="btn btn--danger" type="button" onClick={onDelete}>
-                Delete
-              </button>
+              <button className="btn btn--danger" type="button" onClick={onDelete}>Delete</button>
             )}
             <button className="btn" type="button" onClick={onClose}>Cancel</button>
             <button id="recur-submit" className="btn btn--primary" type="submit">
