@@ -311,3 +311,13 @@
   .form__row  { grid-template-columns: 1fr; }
   .recur__row { flex-direction: column; }
 }
+
+.field__input option {
+  background: #1c2030;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .field__input option {
+  background: #ffffff;
+  color: rgba(15,18,30,0.92);
+}

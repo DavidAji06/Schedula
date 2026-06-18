@@ -8,7 +8,7 @@ import os
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
 
 class ParseRequest(BaseModel):
     text: str
