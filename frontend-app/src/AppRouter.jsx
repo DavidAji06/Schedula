@@ -27,6 +27,13 @@ export default function AppRouter() {
     fetchEvents().then(setEvents).catch(() => {});
   }
 
+  function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUsername("");
+    setEvents([]);
+  }
+
   function toggleTheme() {
     setTheme((t) => {
       const next = t === "dark" ? "light" : "dark";
@@ -47,6 +54,7 @@ export default function AppRouter() {
     events,
     setEvents,
     username,
+    onLogout: handleLogout,
   };
 
   return (

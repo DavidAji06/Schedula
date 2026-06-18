@@ -36,13 +36,14 @@ function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents, username }) {
+export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onToggleView, events, setEvents, username, onLogout }) {
   const navigate = useNavigate();
   const [monthCursor, setMonthCursor] = useState(() => new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [todoOpen, setTodoOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const cells = useMemo(() => buildMonthGrid(monthCursor), [monthCursor]);
   const eventToEdit = editingId ? events.find((e) => e.id === editingId) : null;
@@ -62,6 +63,12 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
   function closeModal() {
     setModalOpen(false);
     setEditingId(null);
+  }
+
+  function confirmLogout() {
+    setLogoutConfirmOpen(false);
+    onLogout();
+    navigate("/");
   }
 
   async function handleSave(payload) {
@@ -161,6 +168,28 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
         onDelete={handleDelete}
       />
 
+      {logoutConfirmOpen && (
+        <div className="modal" role="dialog" aria-modal="true" onMouseDown={() => setLogoutConfirmOpen(false)}>
+          <div className="modal__panel" style={{ maxWidth: 380 }} onMouseDown={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">Sign out?</h2>
+              <button className="modal__close" type="button" onClick={() => setLogoutConfirmOpen(false)}>✕</button>
+            </div>
+            <div className="form">
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text2)" }}>
+                You'll need to sign in again to access your timetable.
+              </p>
+              <div className="form__actions">
+                <button className="btn" type="button" onClick={() => setLogoutConfirmOpen(false)}>Cancel</button>
+                <button className="btn btn--danger" style={{ marginRight: 0 }} type="button" onClick={confirmLogout}>
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="month__topbar">
         <div>
           {username && <p className="month__welcome">Welcome, {username}</p>}
@@ -184,6 +213,9 @@ export default function MonthlyCalendarGrid({ theme, onToggleTheme, view, onTogg
           </button>
           <button className="month__iconBtn" type="button" onClick={() => setTodoOpen(true)}>
             ✓ Tasks
+          </button>
+          <button className="month__iconBtn" type="button" onClick={() => setLogoutConfirmOpen(true)} title="Sign out">
+            ⏻
           </button>
         </div>
       </header>
